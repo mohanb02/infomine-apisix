@@ -1,0 +1,61 @@
+1. Install:
+>sudo docker network create -d bridge apisix
+
+>sudo docker run -d   --name etcd   --network apisix -v ~/etcd_data:/etcd_data  -e ETCD_DATA_DIR=/etcd_data -e ETCD_ENABLE_V2=true -e ALLOW_NONE_AUTHENTICATION=yes   -e ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379 -e ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379  bitnami/etcd:latest
+
+>sudo docker build -t infomine-apisix -f Dockerfile_apisix .
+>sudo docker run -d -p 9080:9080 -p 9443:9443 -p 9180:9180 -p 9091:9091 --network apisix --name apache-apisix   infomine-apisix
+
+> sudo docker build -t infomine-apisix-dashboard -f Dockerfile_apisixdashboard .
+>sudo docker run -d  -p 9000:9000 --network apisix  --name apache-apisix-dashboard infomine-apisix-dashboard
+
+2. Test set up: 
+curl "http://127.0.0.1:9180/apisix/admin/services/" -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1'
+
+3. Configure :
+a. Through Dashboard (http://<host>:9000), configure Route, Consumer & key-auth plugin 
+
+Route:
+curl http://127.0.0.1:9180/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+    "methods": ["GET"],
+    "uri": "/api/itsmprojectCategory/retrieve/org",
+    "id": 1,
+    "plugins": {
+        "key-auth": {}
+    },
+    "upstream": {
+        "type": "roundrobin",
+        "nodes": {
+            "enow.infominesolutions.com:8902": 1
+        }
+    }
+}'
+
+Consumer:
+curl http://127.0.0.1:9180/apisix/admin/consumers -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+    "username": "jack",
+    "plugins": {
+        "key-auth": {
+            "key": "auth-one"
+        }
+    }
+}'
+
+
+b. Through shell, configure SSL:
+export server_cert=$(cat server.crt) // .crt file is from LetsEncrypt
+export server_key=$(cat server.key)  // .key file is from LetsEncrypt
+curl -i "http://127.0.0.1:9180/apisix/admin/ssls" -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1'  -X PUT -d '
+{
+  "id": "apisix-ssl",
+  "sni": "api.infomine.in",
+  "cert": "'"${server_cert}"'",
+  "key": "'"${server_key}"'"
+}'
+
+4. Test configuration:
+curl http://<sni>:9443 -H 'apikey: Cons1SecretKey' -i
+curl -k https://api.infomine.in:9443 -H 'apikey: Cons1SecretKey' -i
+

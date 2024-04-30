@@ -1,0 +1,2 @@
+FROM apache/apisix-dashboard
+COPY  ./dashboard_conf/conf.yaml /usr/local/apisix-dashboard/conf/

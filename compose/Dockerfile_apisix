@@ -1,0 +1,2 @@
+FROM apache/apisix
+COPY ./apisix_conf/release/config.yaml /usr/local/apisix/conf/
