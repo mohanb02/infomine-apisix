@@ -2,3 +2,13 @@
 .DS_Store
 ./package
 !compose/apisix_log/.gitkeep
+images/etcd.tar.gz
+images/infomine-apisix-dashboard.tar.gz
+images/infomine-apisix.tar.gz
+ssl/ca.crt
+ssl/ca.csr
+ssl/ca.key
+ssl/ca.srl
+ssl/server.crt
+ssl/server.csr
+ssl/server.key
